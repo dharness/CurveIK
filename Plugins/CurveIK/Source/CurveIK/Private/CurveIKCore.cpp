@@ -88,10 +88,8 @@ namespace CurveIK_AnimationCore
 		return ArcLength;
 	}
 
-	FCurveIK_CurveCache FindCurve(FVector P1, FVector P2, FVector HandleDir, float HandleWeight, float TargetArcLength, FCurveIKDebugData& FCurveIKDebugData)
+	FCurveIK_CurveCache FindCurve(FVector P1, FVector P2, FVector HandleDir, float HandleWeight, float TargetArcLength, int MaxIterations, float CurveFitTolerance, int NumPoints, FCurveIKDebugData& FCurveIKDebugData)
 	{
-		const float Tolerance = 0.01;
-		const int32 Iterations = 100;
 		FCurveIK_CurveCache CurveCache = FCurveIK_CurveCache();
 		const FVector P = (P2 - P1);
 		const FVector HandleStart = P1 + (P * HandleWeight);
@@ -104,17 +102,17 @@ namespace CurveIK_AnimationCore
 		ControlPoints[3] = P2;
 
 		UE_LOG(LogTemp, Warning, TEXT("----------------------"));
-		for (int i = 0; i < Iterations; i++)
+		for (int i = 0; i < MaxIterations; i++)
 		{
 			const FVector Handle = GetHandleLocation(HandleStart, HandleDir, HandleHeight);
 			ControlPoints[1] = Handle;
 			ControlPoints[2] = Handle;
 			FCurveIKDebugData.ControlPoint = Handle;
 
-			const float ArcLength = EvaluateBezierCurve(ControlPoints, 20, CurveCache);
+			const float ArcLength = EvaluateBezierCurve(ControlPoints, NumPoints, CurveCache);
 			const float Delta = ArcLength - TargetArcLength;
 
-			if (FMath::Abs(Delta) < Tolerance)
+			if (FMath::Abs(Delta) < CurveFitTolerance)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Delta: %f"), Delta);
 				break;
@@ -141,7 +139,8 @@ namespace CurveIK_AnimationCore
 
 
 	bool SolveCurveIK(TArray<FCurveIKChainLink>& InOutChain, const FVector& TargetPosition, float ControlPointWeight,
-		float MaximumReach, FCurveIKDebugData& FCurveIKDebugData)
+	                  float MaximumReach, int MaxIterations, float CurveFitTolerance, int NumPointsOnCurve,
+	                  FCurveIKDebugData& FCurveIKDebugData)
 	{
 		bool bBoneLocationUpdated = false;
 		float const RootToTargetDistSq = FVector::DistSquared(InOutChain[0].Position, TargetPosition);
@@ -174,7 +173,7 @@ namespace CurveIK_AnimationCore
 
 			float ArcLength = 0;
 			const float Weight = FMath::Clamp(ControlPointWeight, 0.0f, 1.0f);
-			FCurveIK_CurveCache CurveCache = FindCurve(P1, P2, HandleDir, Weight, MaximumReach, FCurveIKDebugData);
+			FCurveIK_CurveCache CurveCache = FindCurve(P1, P2, HandleDir, Weight, MaximumReach, MaxIterations, CurveFitTolerance, NumPointsOnCurve, FCurveIKDebugData);
 			FCurveIKDebugData.CurveCache = CurveCache;
 
 			for (int LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)

@@ -11,6 +11,9 @@ FAnimNode_CurveIK::FAnimNode_CurveIK()
 #endif
 {
 	EffectorLocationSpace = EBoneControlSpace::BCS_WorldSpace;
+	MaxIterations = 100;
+	CurveDetail = 20;
+	CurveFitTolerance = 0.01;
 }
 
 FVector FAnimNode_CurveIK::GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex)
@@ -106,8 +109,9 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 
 	int32 const NumChainLinks = CurrentChain.Num();
 
-	const bool bBoneLocationUpdated = CurveIK_AnimationCore::SolveCurveIK(CurrentChain, CSEffectorLocation, ControlPointWeight,
-																	MaximumReach, CurveIKDebugData);
+	const bool bBoneLocationUpdated = CurveIK_AnimationCore::SolveCurveIK(
+		CurrentChain, CSEffectorLocation, ControlPointWeight,
+		MaximumReach, MaxIterations, CurveFitTolerance, CurveDetail, CurveIKDebugData);
 
 	// If we moved some bones, update bone transforms.
 	if (bBoneLocationUpdated)

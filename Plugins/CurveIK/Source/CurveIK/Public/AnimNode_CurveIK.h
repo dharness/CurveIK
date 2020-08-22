@@ -41,32 +41,40 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 {
 	GENERATED_USTRUCT_BODY()
 
-		UPROPERTY(EditAnywhere, Category = Effector, meta = (PinShownByDefault))
-		FVector EffectorLocation;
-
-	UPROPERTY(EditAnywhere, Category = Poles, meta = (PinShownByDefault))
-		FTransform Bead;
+	UPROPERTY(EditAnywhere, Category = Effector, meta = (PinShownByDefault))
+	FVector EffectorLocation;
 
 	UPROPERTY(EditAnywhere, Category = Effector)
-		FBoneSocketTarget EffectorTarget;
+	FBoneSocketTarget EffectorTarget;
 
 	UPROPERTY(EditAnywhere, Category = Effector)
-		TEnumAsByte<enum EBoneControlSpace> EffectorLocationSpace;
+	TEnumAsByte<enum EBoneControlSpace> EffectorLocationSpace;
 
 	UPROPERTY(EditAnywhere, Category = Effector, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
-		float ControlPointWeight;
+	float ControlPointWeight;
 
 	/** Name of tip bone */
 	UPROPERTY(EditAnywhere, Category = Solver)
-		FBoneReference TipBone;
+	FBoneReference TipBone;
 
 	/** Name of the root bone*/
 	UPROPERTY(EditAnywhere, Category = Solver)
-		FBoneReference RootBone;
+	FBoneReference RootBone;
 
+	/** Maximum number of iterations allowed, to control performance. */
+	UPROPERTY(EditAnywhere, Category = Solver)
+	int32 MaxIterations;
+
+	/** The number of points used to approximate the curve. Higher values impact both compute times and memory. */
+	UPROPERTY(EditAnywhere, Category = Solver)
+	int32 CurveDetail;
+
+	/** Allowable delta between arc length of the curve and arc length as the sum of bone lengths */
+	UPROPERTY(EditAnywhere, Category = Solver)
+	float CurveFitTolerance;
 
 	UPROPERTY(EditAnywhere, Category = Poles, meta = (ClampMin = "0", ClampMax = "360", UIMin = "0", UIMax = "360"))
-		float PoleAngle;
+	float PoleAngle;
 
 #if WITH_EDITORONLY_DATA
 	/** Toggle drawing of axes to debug joint rotation*/

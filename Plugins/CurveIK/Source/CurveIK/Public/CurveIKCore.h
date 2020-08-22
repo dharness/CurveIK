@@ -89,6 +89,6 @@ public:
 namespace CurveIK_AnimationCore
 {
 	CURVEIK_API bool SolveCurveIK(TArray<FCurveIKChainLink>& InOutChain, const FVector& TargetLocation,
-		float ControlPointWeight, float MaximumReach, FCurveIKDebugData& CurveIKDebugData);
-	
+	                              float ControlPointWeight, float MaximumReach, int MaxIterations, float CurveFitTolerance,
+	                              int NumPointsOnCurve, FCurveIKDebugData& CurveIKDebugData);
 };
