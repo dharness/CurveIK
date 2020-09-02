@@ -20,6 +20,10 @@ public:
 	/** Distance to its parent link. */
 	float Length;
 
+	FVector RotationAxis;
+	FVector ForwardVector;
+	FString BoneName;
+
 	/** Bone Index in SkeletalMesh */
 	int32 BoneIndex;
 
@@ -90,5 +94,5 @@ namespace CurveIK_AnimationCore
 {
 	CURVEIK_API bool SolveCurveIK(TArray<FCurveIKChainLink>& InOutChain, const FVector& TargetLocation,
 	                              float ControlPointWeight, float MaximumReach, int MaxIterations, float CurveFitTolerance,
-	                              int NumPointsOnCurve, FCurveIKDebugData& CurveIKDebugData);
+	                              int NumPointsOnCurve, float Stretch, FCurveIKDebugData& CurveIKDebugData);
 };

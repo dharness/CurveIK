@@ -39,6 +39,11 @@ void UAnimGraphNode_CurveIK::CopyNodeDataToPreviewNode(FAnimNode_Base* InPreview
 
 	// copies Pin values from the internal node to get data which are not compiled yet
 	AnimNodeCurveIK->EffectorLocation = Node.EffectorLocation;
+	AnimNodeCurveIK->Stretch = Node.Stretch;
+	AnimNodeCurveIK->MaxIterations = Node.MaxIterations;
+	AnimNodeCurveIK->CurveDetail = Node.CurveDetail;
+	AnimNodeCurveIK->CurveFitTolerance = Node.CurveFitTolerance;
+	AnimNodeCurveIK->PoleAngle = Node.PoleAngle;
 }
 
 FEditorModeID UAnimGraphNode_CurveIK::GetEditorMode() const

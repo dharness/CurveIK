@@ -1,8 +1,17 @@
 #include "CurveCache.h"
 
-void FCurveIK_CurveCache::Add(float ArcLength, FVector CurvePosition)
+void FCurveIK_CurveCache::Add(float ArcLength, FVector CurvePosition, float T)
 {
-	CurveCache.Add(MakeTuple(ArcLength, CurvePosition));
+	auto Item = FCurveIK_CurveCacheItem();
+	Item.ArcLength = ArcLength;
+	Item.Point = CurvePosition;
+	Item.T = T;
+	CurveCache.Add(Item);
+}
+
+FCurveIK_CurveCacheItem FCurveIK_CurveCache::Get(int Index)
+{
+	return CurveCache[Index];
 }
 
 void FCurveIK_CurveCache::Empty()
@@ -18,13 +27,13 @@ FVector FCurveIK_CurveCache::FindNearest(const float ArcLength)
 	int SearchAreaEnd = CurveCache.Num() - 1;
 	// The cache is not big enough to search
 	if (SearchAreaEnd < 0) { return FVector::ZeroVector; }
-	if (SearchAreaStart == SearchAreaEnd) { return CurveCache[SearchAreaStart].Value; }
+	if (SearchAreaStart == SearchAreaEnd) { return CurveCache[SearchAreaStart].Point; }
 
 	// Check our edges before bothering to search
-	const float MinArcLength = CurveCache[SearchAreaStart].Key;
-	const float MaxArcLength = CurveCache[SearchAreaEnd].Key;
-	if (ArcLength <= MinArcLength) { return CurveCache[SearchAreaStart].Value; }
-	if (ArcLength >= MaxArcLength) { return CurveCache[SearchAreaEnd].Value; }
+	const float MinArcLength = CurveCache[SearchAreaStart].ArcLength;
+	const float MaxArcLength = CurveCache[SearchAreaEnd].ArcLength;
+	if (ArcLength <= MinArcLength) { return CurveCache[SearchAreaStart].Point; }
+	if (ArcLength >= MaxArcLength) { return CurveCache[SearchAreaEnd].Point; }
 
 	while (!FoundMatch)
 	{
@@ -37,15 +46,15 @@ FVector FCurveIK_CurveCache::FindNearest(const float ArcLength)
 		const auto RightCacheItem = CurveCache[Right];
 
 		// Correct Range
-		if (ArcLength >= LeftCacheItem.Key && ArcLength <= RightCacheItem.Key)
+		if (ArcLength >= LeftCacheItem.ArcLength && ArcLength <= RightCacheItem.ArcLength)
 		{
 			FoundMatch = true;
-			const float Overshoot = ArcLength - LeftCacheItem.Key;
-			const float ArcLengthGap = RightCacheItem.Key - LeftCacheItem.Key;
+			const float Overshoot = ArcLength - LeftCacheItem.ArcLength;
+			const float ArcLengthGap = RightCacheItem.ArcLength - LeftCacheItem.ArcLength;
 			const float PercentThroughGap = Overshoot / ArcLengthGap;
-			NearestCurveValue = FMath::Lerp(LeftCacheItem.Value, RightCacheItem.Value, PercentThroughGap);
+			NearestCurveValue = FMath::Lerp(LeftCacheItem.Point, RightCacheItem.Point, PercentThroughGap);
 		}
-		else if (ArcLength > RightCacheItem.Key) { SearchAreaStart = Right; } // We're too low, go right
+		else if (ArcLength > RightCacheItem.ArcLength) { SearchAreaStart = Right; } // We're too low, go right
 		else { SearchAreaEnd = Left; } // We're too high, go left
 	}
 
@@ -57,7 +66,7 @@ TArray<FVector> FCurveIK_CurveCache::GetPoints()
 	TArray<FVector> Points;
 	for (auto CacheItem : CurveCache)
 	{
-		Points.Add(CacheItem.Value);
+		Points.Add(CacheItem.Point);
 	}
 	return  Points;
 }

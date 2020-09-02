@@ -14,6 +14,7 @@ FAnimNode_CurveIK::FAnimNode_CurveIK()
 	MaxIterations = 100;
 	CurveDetail = 20;
 	CurveFitTolerance = 0.01;
+	Stretch = 0;
 }
 
 FVector FAnimNode_CurveIK::GetCurrentLocation(FCSPose<FCompactPose>& MeshBases, const FCompactPoseBoneIndex& BoneIndex)
@@ -47,7 +48,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 	FVector const CSEffectorLocation = EffectorLocation;
 
 	// Gather all bone indices between root and tip.
-	TArray<FCompactPoseBoneIndex> BoneIndices;
+	TArray<FCompactPoseBoneIndex> CompactPoseBoneIndices;
 
 	const int32 BoneCount = CachedBoneReferences.Num();
 	for (int32 BoneIndex = 0; BoneIndex < BoneCount; BoneIndex++)
@@ -57,14 +58,14 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 		{
 			break;
 		}
-		BoneIndices.Add(BoneData.Bone.GetCompactPoseIndex(BoneContainer));
+		CompactPoseBoneIndices.Add(BoneData.Bone.GetCompactPoseIndex(BoneContainer));
 	}
 
 	// Maximum length of skeleton segment at full extension
 	float MaximumReach = 0;
 
 	// Gather transforms
-	int32 const NumTransforms = BoneIndices.Num();
+	int32 const NumTransforms = CompactPoseBoneIndices.Num();
 	OutBoneTransforms.AddUninitialized(NumTransforms);
 
 	// Gather chain links. These are non zero length bones.
@@ -73,7 +74,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 
 	// Start with Root Bone
 	{
-		const FCompactPoseBoneIndex& RootBoneIndex = BoneIndices[0];
+		const FCompactPoseBoneIndex& RootBoneIndex = CompactPoseBoneIndices[0];
 		const FTransform& BoneCSTransform = Output.Pose.GetComponentSpaceTransform(RootBoneIndex);
 
 		OutBoneTransforms[0] = FBoneTransform(RootBoneIndex, BoneCSTransform);
@@ -83,7 +84,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 	// Go through remaining transforms
 	for (int32 TransformIndex = 1; TransformIndex < NumTransforms; TransformIndex++)
 	{
-		const FCompactPoseBoneIndex& BoneIndex = BoneIndices[TransformIndex];
+		const FCompactPoseBoneIndex& BoneIndex = CompactPoseBoneIndices[TransformIndex];
 
 		const FTransform& BoneCSTransform = Output.Pose.GetComponentSpaceTransform(BoneIndex);
 		FVector const BoneCSPosition = BoneCSTransform.GetLocation();
@@ -111,7 +112,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 
 	const bool bBoneLocationUpdated = CurveIK_AnimationCore::SolveCurveIK(
 		CurrentChain, CSEffectorLocation, ControlPointWeight,
-		MaximumReach, MaxIterations, CurveFitTolerance, CurveDetail, CurveIKDebugData);
+		MaximumReach, MaxIterations, CurveFitTolerance, CurveDetail, Stretch, CurveIKDebugData);
 
 	// If we moved some bones, update bone transforms.
 	if (bBoneLocationUpdated)
@@ -130,9 +131,10 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 			}
 		}
 
+		UE_LOG(LogTemp, Warning, TEXT("-----------------------------------------------"));
 		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks - 1; LinkIndex++)
 		{
-			FCurveIKChainLink const& CurrentLink = CurrentChain[LinkIndex];
+			FCurveIKChainLink & CurrentLink = CurrentChain[LinkIndex];
 			FCurveIKChainLink const& ChildLink = CurrentChain[LinkIndex + 1];
 
 			// Calculate pre-translation vector between this bone and child
@@ -142,16 +144,33 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 			FVector const NewDir = (ChildLink.Position - CurrentLink.Position).GetUnsafeNormal();
 
 			// Calculate axis of rotation from pre-translation vector to post-translation vector
-			FVector const RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
+			FVector RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
 			float const RotationAngle = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
+			CurrentLink.RotationAxis = RotationAxis;
+			const FCurveIK_CachedBoneData& BoneData = CachedBoneReferences[LinkIndex];
 			FQuat const DeltaRotation = FQuat(RotationAxis, RotationAngle);
 			// We're going to multiply it, in order to not have to re-normalize the final quaternion, it has to be a unit quaternion.
 			checkSlow(DeltaRotation.IsNormalized());
 
-			// Calculate absolute rotation and set it
 			FTransform& CurrentBoneTransform = OutBoneTransforms[CurrentLink.TransformIndex].Transform;
+			FVector OldForward = CurrentBoneTransform.GetRotation().GetForwardVector();
+		
+			// Calculate absolute rotation and set it
 			CurrentBoneTransform.SetRotation(DeltaRotation * CurrentBoneTransform.GetRotation());
 			CurrentBoneTransform.NormalizeRotation();
+
+			// TEST ROPTATIONS ------------
+			//FQuat const BoneRoll = FQuat(NewDir, FMath::DegreesToRadians(25.f * LinkIndex));
+			//CurrentBoneTransform.SetRotation(BoneRoll * CurrentBoneTransform.GetRotation());
+			//CurrentBoneTransform.NormalizeRotation();
+
+			FVector NewForward = CurrentBoneTransform.GetRotation().GetForwardVector();
+			CurrentLink.ForwardVector = NewForward;
+			float const ForwardDelta = FMath::Acos(FVector::DotProduct(OldForward, NewForward));
+
+			UE_LOG(LogTemp, Warning, TEXT("Before: %s"), *OldForward.ToString());
+			UE_LOG(LogTemp, Warning, TEXT("After: %s"), *NewForward.ToString());
+			UE_LOG(LogTemp, Warning, TEXT("ForwardDelta: %f"), FMath::RadiansToDegrees(ForwardDelta));
 
 			// Update zero length children if any
 			int32 const NumChildren = CurrentLink.ChildZeroLengthTransformIndices.Num();
@@ -160,6 +179,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 				FTransform& ChildBoneTransform = OutBoneTransforms[CurrentLink.ChildZeroLengthTransformIndices[ChildIndex]].Transform;
 				ChildBoneTransform.SetRotation(DeltaRotation * ChildBoneTransform.GetRotation());
 				ChildBoneTransform.NormalizeRotation();
+
 			}
 		}
 #if WITH_EDITOR

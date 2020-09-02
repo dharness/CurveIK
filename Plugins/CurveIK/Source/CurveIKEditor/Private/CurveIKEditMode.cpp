@@ -119,6 +119,12 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 				FLinearColor::FromSRGBColor(FColor::Orange),
 				SDPG_Foreground
 			);
+			PDI->DrawLine(
+				ChainLink.Position,
+				ChainLink.Position + (ChainLink.ForwardVector * 200.f),
+				FLinearColor::FromSRGBColor(FColor::Emerald),
+				SDPG_Foreground
+			);
 			PDI->DrawPoint(ChainLink.Position, FLinearColor::FromSRGBColor(FColor::Orange), 30, SDPG_Foreground);
 			FCurveIKChainLink ParentChainLink = RuntimeNode->Chain[i - 1];
 		}
