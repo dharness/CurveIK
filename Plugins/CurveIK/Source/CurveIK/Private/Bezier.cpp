@@ -4,27 +4,47 @@ FVector FBezier::Evaluate(const float T) const
 {
 	const auto Pow = FGenericPlatformMath::Pow;
 
-	FVector PFinal;
-	PFinal.X = Pow(1 - T, 2) * A.X +
-		(1 - T) * 2 * T * B.X +
-		T * T * D.X;
-	PFinal.Y = Pow(1 - T, 2) * A.Y +
-		(1 - T) * 2 * T * B.Y +
-		T * T * D.Y;
-	PFinal.Z = Pow(1 - T, 2) * A.Z +
-		(1 - T) * 2 * T * B.Z +
-		T * T * D.Z;
-	return PFinal;
+	// Quadratic:
+	return Pow(1 - T, 2) * A + (1 - T) * 2 * T * B + (T * T) * C;
 }
 
 FVector FBezier::EvaluateDerivative(float T) const
 {
 	const auto Pow = FGenericPlatformMath::Pow;
+	// Quadratic:
+	FVector const Derivative = A * (2*T - 2) + (2 * C - 4 * B) * T + 2 * B;
+	return Derivative;
+}
 
-	const FVector APrime = 3 * (B - A);
-	const FVector BPrime = 3 * (C - B);
-	const FVector CPrime = 3 * (D - C);
-	return APrime * Pow(1 - T, 2) + 2 * BPrime * (1 - T) * T + CPrime * Pow(T, 2);
+FVector FBezier::EvaluateNormal(float T) const
+{
+	FVector const R1 = EvaluateDerivative(T);
+	FVector const R2 = EvaluateDerivative(T + 0.01);
+	float const Q1 = R1.Size();
+	float const Q2 = R2.Size();
+	FVector const NormalR1 = R1.GetSafeNormal();
+	FVector const NormalR2 = R2.GetSafeNormal();
+	FVector Cp = FVector::CrossProduct(NormalR2, NormalR1).GetSafeNormal();
+
+	// rotation matrix
+	float R[] = {
+		Cp.X* Cp.X,
+		Cp.X* Cp.Y - Cp.Z,
+		Cp.X* Cp.Z + Cp.Y,
+		Cp.X* Cp.Y + Cp.Z,
+		Cp.Y* Cp.Y,
+		Cp.Y* Cp.Z - Cp.X,
+		Cp.X* Cp.Z - Cp.Y,
+		Cp.Y* Cp.Z + Cp.X,
+		Cp.Z* Cp.Z
+	};
+	// normal vector:
+	FVector N;
+	N.X = R[0] * R1.X + R[1] * R1.Y + R[2] * R1.Z;
+	N.Y = R[3] * R1.X + R[4] * R1.Y + R[5] * R1.Z;
+	N.Z = R[6] * R1.X + R[7] * R1.Y + R[8] * R1.Z;
+
+	return N;
 }
 
 void FBezier::EvaluateMany(int32 const NumPoints)
@@ -51,21 +71,36 @@ void FBezier::EvaluateMany(int32 const NumPoints)
 	}
 }
 
-FVector FBezier::Approximate(float const TargetArcLength)
+FCurveIK_CurveCacheItem FBezier::Approximate(float const TargetArcLength)
 {
-	FVector NearestCurveValue;
+	FCurveIK_CurveCacheItem NearestCurvePoint = FCurveIK_CurveCacheItem();
 	bool FoundMatch = false;
 	int SearchAreaStart = 0;
 	int SearchAreaEnd = CurveCache.GetPoints().Num() - 1;
 	// The cache is not big enough to search
-	if (SearchAreaEnd < 0) { return FVector::ZeroVector; }
-	if (SearchAreaStart == SearchAreaEnd) { return CurveCache.Get(SearchAreaStart).Point; }
+	if (SearchAreaEnd < 0) { FoundMatch = true; }
+	if (SearchAreaStart == SearchAreaEnd)
+	{
+		NearestCurvePoint.Point = CurveCache.Get(SearchAreaStart).Point;
+		NearestCurvePoint.T = 0;
+		FoundMatch = true;
+	}
 
 	// Check our edges before bothering to search
 	const float MinArcLength = CurveCache.Get(SearchAreaStart).ArcLength;
 	const float MaxArcLength = CurveCache.Get(SearchAreaEnd).ArcLength;
-	if (TargetArcLength <= MinArcLength) { return CurveCache.Get(SearchAreaStart).Point; }
-	if (TargetArcLength >= MaxArcLength) { return CurveCache.Get(SearchAreaEnd).Point; }
+	if (TargetArcLength <= MinArcLength)
+	{
+		NearestCurvePoint.Point = CurveCache.Get(SearchAreaStart).Point;
+		NearestCurvePoint.T = 0;
+		FoundMatch = true;
+	}
+	if (TargetArcLength >= MaxArcLength)
+	{
+		NearestCurvePoint.Point = CurveCache.Get(SearchAreaEnd).Point;
+		NearestCurvePoint.T = 1;
+		FoundMatch = true;
+	}
 
 	while (!FoundMatch)
 	{
@@ -84,11 +119,16 @@ FVector FBezier::Approximate(float const TargetArcLength)
 			const float Overshoot = TargetArcLength - LeftCacheItem.ArcLength;
 			const float ArcLengthGap = RightCacheItem.ArcLength - LeftCacheItem.ArcLength;
 			const float PercentThroughGap = Overshoot / ArcLengthGap;
-			NearestCurveValue = FMath::Lerp(LeftCacheItem.Point, RightCacheItem.Point, PercentThroughGap);
+
+			NearestCurvePoint.Point = FMath::Lerp(LeftCacheItem.Point, RightCacheItem.Point, PercentThroughGap);
+			NearestCurvePoint.T = FMath::Lerp(LeftCacheItem.T, RightCacheItem.T, PercentThroughGap);
 		}
 		else if (TargetArcLength > RightCacheItem.ArcLength) { SearchAreaStart = Right; } // We're too low, go right
 		else { SearchAreaEnd = Left; } // We're too high, go left
 	}
 
-	return NearestCurveValue;
+	NearestCurvePoint.Tangent = EvaluateDerivative(NearestCurvePoint.T).GetSafeNormal();
+	NearestCurvePoint.Normal = EvaluateNormal(NearestCurvePoint.T).GetSafeNormal();
+
+	return NearestCurvePoint;
 }

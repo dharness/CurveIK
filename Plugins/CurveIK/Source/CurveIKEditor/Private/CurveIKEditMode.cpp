@@ -121,8 +121,13 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 			);
 			PDI->DrawLine(
 				ChainLink.Position,
-				ChainLink.Position + (ChainLink.ForwardVector * 200.f),
+				ChainLink.Position + (ChainLink.Tangent * 200.f),
 				FLinearColor::FromSRGBColor(FColor::Emerald),
+				SDPG_Foreground
+			);			PDI->DrawLine(
+				ChainLink.Position,
+				ChainLink.Position + (ChainLink.Normal * 200.f),
+				FLinearColor::FromSRGBColor(FColor::Red),
 				SDPG_Foreground
 			);
 			PDI->DrawPoint(ChainLink.Position, FLinearColor::FromSRGBColor(FColor::Orange), 30, SDPG_Foreground);

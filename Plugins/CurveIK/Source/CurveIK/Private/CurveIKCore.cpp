@@ -129,9 +129,11 @@ namespace CurveIK_AnimationCore
 			{
 				FCurveIKChainLink& CurrentLink = InOutChain[LinkIndex];
 				ArcLength += CurrentLink.Length;
-				// TODO follow this through bud
+
 				const FCurveIK_CurveCacheItem CurvePoint = Bezier.Approximate(ArcLength);
 				const FVector BonePosition = CurvePoint.Point;
+				CurrentLink.Tangent = CurvePoint.Tangent;
+				CurrentLink.Normal = CurvePoint.Normal;
 
 				if (Stretch != 0)
 				{

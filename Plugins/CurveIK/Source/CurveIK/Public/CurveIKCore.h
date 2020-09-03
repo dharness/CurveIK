@@ -22,6 +22,8 @@ public:
 
 	FVector RotationAxis;
 	FVector ForwardVector;
+	FVector Tangent;
+	FVector Normal;
 	FString BoneName;
 
 	/** Bone Index in SkeletalMesh */

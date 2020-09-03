@@ -19,9 +19,6 @@ struct FBezier
 	
 		UPROPERTY()
 		FVector C;
-	
-		UPROPERTY()
-		FVector D;
 
 		UPROPERTY()
 		FCurveIK_CurveCache CurveCache;
@@ -33,19 +30,17 @@ struct FBezier
 			: A(FVector::ZeroVector)
 			, B(FVector::ZeroVector)
 			, C(FVector::ZeroVector)
-			, D(FVector::ZeroVector)
 		{}
 
-		FBezier(FVector const A, FVector const B, FVector const C, FVector const D): A(A), B(B), C(C), D(D) {}
-
-		FBezier(FVector const A, FVector const B, FVector const D): A(A), B(B), C(B), D(D) {}
+		FBezier(FVector const A, FVector const B, FVector const C): A(A), B(B), C(C) {}
 
 		FVector Evaluate(float T) const;
 	
 		FVector EvaluateDerivative(float T) const;
+	FVector EvaluateNormal(float T) const;
 
-		void EvaluateMany(int32 NumPoints);
+	void EvaluateMany(int32 NumPoints);
 
-		FVector Approximate(float ArcLength);
+		FCurveIK_CurveCacheItem Approximate(float TargetArcLength);
 };
 
