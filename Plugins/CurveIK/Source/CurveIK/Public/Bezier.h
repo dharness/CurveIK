@@ -41,6 +41,6 @@ struct FBezier
 
 	void EvaluateMany(int32 NumPoints);
 
-		FCurveIK_CurveCacheItem Approximate(float TargetArcLength);
+		FCurvePoint Approximate(float TargetArcLength);
 };
 

@@ -5,7 +5,7 @@
 #include "CurveCache.generated.h"
 
 USTRUCT()
-struct CURVEIK_API FCurveIK_CurveCacheItem
+struct CURVEIK_API FCurvePoint
 {
 	GENERATED_BODY()
 
@@ -25,7 +25,7 @@ struct CURVEIK_API FCurveIK_CurveCache
 public:
 	void Add(float ArcLength, FVector CurvePosition, float T);
 
-	FCurveIK_CurveCacheItem Get(int Index);
+	FCurvePoint Get(int Index);
 
 	void Empty();
 
@@ -34,6 +34,6 @@ public:
 	TArray<FVector> GetPoints();
 
 private:
-	TArray<FCurveIK_CurveCacheItem> CurveCache;
+	TArray<FCurvePoint> CurveCache;
 };
 

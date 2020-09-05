@@ -2,14 +2,14 @@
 
 void FCurveIK_CurveCache::Add(float ArcLength, FVector CurvePosition, float T)
 {
-	auto Item = FCurveIK_CurveCacheItem();
+	auto Item = FCurvePoint();
 	Item.ArcLength = ArcLength;
 	Item.Point = CurvePosition;
 	Item.T = T;
 	CurveCache.Add(Item);
 }
 
-FCurveIK_CurveCacheItem FCurveIK_CurveCache::Get(int Index)
+FCurvePoint FCurveIK_CurveCache::Get(int Index)
 {
 	return CurveCache[Index];
 }

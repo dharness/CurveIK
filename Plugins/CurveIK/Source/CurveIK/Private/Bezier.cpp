@@ -16,6 +16,10 @@ FVector FBezier::EvaluateDerivative(float T) const
 	return Derivative;
 }
 
+/**
+ * See https://stackoverflow.com/questions/25453159/getting-consistent-normals-from-a-3d-cubic-bezier-path
+ * for a full explanation of this method
+ */
 FVector FBezier::EvaluateNormal(float T) const
 {
 	FVector const R1 = EvaluateDerivative(T);
@@ -71,9 +75,9 @@ void FBezier::EvaluateMany(int32 const NumPoints)
 	}
 }
 
-FCurveIK_CurveCacheItem FBezier::Approximate(float const TargetArcLength)
+FCurvePoint FBezier::Approximate(float const TargetArcLength)
 {
-	FCurveIK_CurveCacheItem NearestCurvePoint = FCurveIK_CurveCacheItem();
+	FCurvePoint NearestCurvePoint = FCurvePoint();
 	bool FoundMatch = false;
 	int SearchAreaStart = 0;
 	int SearchAreaEnd = CurveCache.GetPoints().Num() - 1;

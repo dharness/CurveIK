@@ -144,33 +144,33 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 			FVector const NewDir = (ChildLink.Position - CurrentLink.Position).GetUnsafeNormal();
 
 			// Calculate axis of rotation from pre-translation vector to post-translation vector
-			FVector RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
+			FVector const RotationAxis = FVector::CrossProduct(OldDir, NewDir).GetSafeNormal();
 			float const RotationAngle = FMath::Acos(FVector::DotProduct(OldDir, NewDir));
-			CurrentLink.RotationAxis = RotationAxis;
-			const FCurveIK_CachedBoneData& BoneData = CachedBoneReferences[LinkIndex];
 			FQuat const DeltaRotation = FQuat(RotationAxis, RotationAngle);
 			// We're going to multiply it, in order to not have to re-normalize the final quaternion, it has to be a unit quaternion.
 			checkSlow(DeltaRotation.IsNormalized());
 
-			FTransform& CurrentBoneTransform = OutBoneTransforms[CurrentLink.TransformIndex].Transform;
-			FVector OldForward = CurrentBoneTransform.GetRotation().GetForwardVector();
-		
 			// Calculate absolute rotation and set it
+			FTransform& CurrentBoneTransform = OutBoneTransforms[CurrentLink.TransformIndex].Transform;		
 			CurrentBoneTransform.SetRotation(DeltaRotation * CurrentBoneTransform.GetRotation());
 			CurrentBoneTransform.NormalizeRotation();
 
-			// TEST ROPTATIONS ------------
-			//FQuat const BoneRoll = FQuat(NewDir, FMath::DegreesToRadians(25.f * LinkIndex));
-			//CurrentBoneTransform.SetRotation(BoneRoll * CurrentBoneTransform.GetRotation());
-			//CurrentBoneTransform.NormalizeRotation();
+			// Correct the bone roll
+			{
+				FVector const BoneRollAxis = -1 * NewDir;
+				FVector OldBoneRollDir = CurrentBoneTransform.GetRotation().GetUpVector() * -1.f;
+				CurrentLink.OldBoneRollDir = OldBoneRollDir;
 
-			FVector NewForward = CurrentBoneTransform.GetRotation().GetForwardVector();
-			CurrentLink.ForwardVector = NewForward;
-			float const ForwardDelta = FMath::Acos(FVector::DotProduct(OldForward, NewForward));
+				FVector NewBoneRollDir = FVector::VectorPlaneProject(CurrentLink.CurvePoint.Normal, NewDir);
+				float const DeltaToNewBoneRoll = FMath::Acos(FVector::DotProduct(OldBoneRollDir, NewBoneRollDir));
 
-			UE_LOG(LogTemp, Warning, TEXT("Before: %s"), *OldForward.ToString());
-			UE_LOG(LogTemp, Warning, TEXT("After: %s"), *NewForward.ToString());
-			UE_LOG(LogTemp, Warning, TEXT("ForwardDelta: %f"), FMath::RadiansToDegrees(ForwardDelta));
+				FQuat const DeltaBoneRoll = FQuat::FindBetweenVectors(OldBoneRollDir, NewBoneRollDir);
+				CurrentLink.NewBoneRollDir = NewBoneRollDir;
+				
+				CurrentBoneTransform.SetRotation(DeltaBoneRoll * CurrentBoneTransform.GetRotation());
+				CurrentBoneTransform.NormalizeRotation();
+				CurrentLink.BoneUpVector = CurrentBoneTransform.GetRotation().GetUpVector() * -1.f;
+			}
 
 			// Update zero length children if any
 			int32 const NumChildren = CurrentLink.ChildZeroLengthTransformIndices.Num();

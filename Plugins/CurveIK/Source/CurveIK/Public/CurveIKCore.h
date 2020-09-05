@@ -20,11 +20,11 @@ public:
 	/** Distance to its parent link. */
 	float Length;
 
-	FVector RotationAxis;
-	FVector ForwardVector;
-	FVector Tangent;
-	FVector Normal;
-	FString BoneName;
+	/* The point on the curve where the base of this link lies */
+	FCurvePoint CurvePoint;
+	FVector OldBoneRollDir;
+	FVector NewBoneRollDir;
+	FVector BoneUpVector;
 
 	/** Bone Index in SkeletalMesh */
 	int32 BoneIndex;
