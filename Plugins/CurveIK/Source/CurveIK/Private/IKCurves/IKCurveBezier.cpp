@@ -1,6 +1,6 @@
-#include "Bezier.h"
+#include "IKCurves/IKCurveBezier.h"
 
-FVector FBezier::Evaluate(const float T) const
+FVector IKCurveBezier::Evaluate(const float T) const
 {
 	const auto Pow = FGenericPlatformMath::Pow;
 
@@ -8,7 +8,7 @@ FVector FBezier::Evaluate(const float T) const
 	return Pow(1 - T, 2) * A + (1 - T) * 2 * T * B + (T * T) * C;
 }
 
-FVector FBezier::EvaluateDerivative(float T) const
+FVector IKCurveBezier::EvaluateDerivative(float T) const
 {
 	const auto Pow = FGenericPlatformMath::Pow;
 	// Quadratic:
@@ -17,10 +17,10 @@ FVector FBezier::EvaluateDerivative(float T) const
 }
 
 /**
- * See https://stackoverflow.com/questions/25453159/getting-consistent-normals-from-a-3d-cubic-bezier-path
+ * See https://stackoverflow.com/questions/25453159/getting-consistent-normals-from-a-3d-cubic-IKCurvebezier-path
  * for a full explanation of this method
  */
-FVector FBezier::EvaluateNormal(float T) const
+FVector IKCurveBezier::EvaluateNormal(float T) const
 {
 	FVector const R1 = EvaluateDerivative(T);
 	FVector const R2 = EvaluateDerivative(T + 0.01);
@@ -51,7 +51,7 @@ FVector FBezier::EvaluateNormal(float T) const
 	return N;
 }
 
-void FBezier::EvaluateMany(int32 const NumPoints)
+void IKCurveBezier::EvaluateMany(int32 const NumPoints)
 {
 	const float MinT = 0;
 	const float MaxT = 1;
@@ -75,7 +75,7 @@ void FBezier::EvaluateMany(int32 const NumPoints)
 	}
 }
 
-FCurvePoint FBezier::Approximate(float const TargetArcLength)
+FCurvePoint IKCurveBezier::Approximate(float const TargetArcLength)
 {
 	FCurvePoint NearestCurvePoint = FCurvePoint();
 	bool FoundMatch = false;

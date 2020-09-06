@@ -11,14 +11,12 @@ void FCurveIKEditMode::EnterMode(class UAnimGraphNode_Base* InEditorNode, struct
 {
 	RuntimeNode = static_cast<FAnimNode_CurveIK*>(InRuntimeNode);
 	GraphNode = CastChecked<UAnimGraphNode_CurveIK>(InEditorNode);
-	UE_LOG(LogTemp, Warning, TEXT("EnterMode"));
 
 	CurveIKEditModeBase::EnterMode(InEditorNode, InRuntimeNode);
 }
 
 void FCurveIKEditMode::ExitMode()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ExitMode"));
 	RuntimeNode = nullptr;
 	GraphNode = nullptr;
 
@@ -149,6 +147,7 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 				FLinearColor::FromSRGBColor(FColor::Yellow),
 				SDPG_Foreground
 			);
+
 			PDI->DrawPoint(ChainLink.Position, FLinearColor::FromSRGBColor(FColor::Orange), 30, SDPG_Foreground);
 			FCurveIKChainLink ParentChainLink = RuntimeNode->Chain[i - 1];
 		}

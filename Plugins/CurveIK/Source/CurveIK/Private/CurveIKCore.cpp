@@ -1,8 +1,10 @@
 #include "CurveIKCore.h"
 #include "CurveCache.h"
-#include "Bezier.h"
-#include "DrawDebugHelpers.h"
+#include "IKCurves/IKCurveBezier.h"
 #include "Engine/World.h"
+#include "IKCurves/IKCurveLine.h"
+
+enum CurveType { Bezier, Line };
 
 namespace CurveIK_AnimationCore
 {
@@ -10,7 +12,6 @@ namespace CurveIK_AnimationCore
 		FVector ComponentRightVector)
 	{
 		const FVector P = (P2 - P1);
-		const FVector DirToNextPoint = P.GetSafeNormal();
 		const FQuat Transformation = FQuat::FindBetweenVectors(ComponentUpVector, P);
 		const FVector HandleVector = Transformation.RotateVector(ComponentRightVector);
 
@@ -38,7 +39,13 @@ namespace CurveIK_AnimationCore
 		return HandleHeight;
 	}
 
-	FBezier FindCurve(FVector P1, FVector P2, FVector HandleDir, FVector& HandlePosition, float HandleWeight, float TargetArcLength,
+	IKCurve* FindCurveLine(FVector P1, FVector P2, FVector HandleDir, float TargetArcLength)
+	{
+		FVector LineDir = P2 - P1;
+		return new IKCurveLine(P1, P2, HandleDir, TargetArcLength);
+	}
+
+	IKCurve* FindCurveBezier(FVector P1, FVector P2, FVector HandleDir, FVector& HandlePosition, float HandleWeight, float TargetArcLength,
 	                              int MaxIterations, float CurveFitTolerance, int NumPoints)
 	{
 		const FVector P = (P2 - P1);
@@ -51,7 +58,7 @@ namespace CurveIK_AnimationCore
 		ControlPoints[0] = P1;
 		ControlPoints[3] = P2;
 
-		FBezier Bezier;
+		IKCurveBezier* Bezier = nullptr;
 		for (int i = 0; i < MaxIterations; i++)
 		{
 			const FVector Handle = GetHandleLocation(HandleStart, HandleDir, HandleHeight);
@@ -59,9 +66,9 @@ namespace CurveIK_AnimationCore
 			ControlPoints[2] = Handle;
 			HandlePosition = Handle;
 
-			Bezier = FBezier(P1, Handle, P2);
-			Bezier.EvaluateMany(NumPoints);
-			const float Delta = Bezier.ArcLength - TargetArcLength;
+			Bezier = new IKCurveBezier(P1, Handle, P2);
+			Bezier->EvaluateMany(NumPoints);
+			const float Delta = Bezier->ArcLength - TargetArcLength;
 
 			if (FMath::Abs(Delta) < CurveFitTolerance) { break; }
 			else
@@ -95,57 +102,53 @@ namespace CurveIK_AnimationCore
 		const FVector RightVector = FVector::RightVector;
 		const FVector UpVector = FVector::UpVector;
 
-		// If the effector is further away than the distance from root to tip, simply move all bones in a line from root to effector location
+		const FVector P1 = InOutChain[0].Position;
+		FVector P2 = TargetPosition;
+		const FVector HandleDir = GetDefaultHandleDir(P1, P2, RightVector, UpVector);
+		FVector Handle;
+
+		FCurveIKDebugData.RightVector = RightVector;
+		FCurveIKDebugData.UpVector = UpVector;
+		FCurveIKDebugData.ControlVector = HandleDir;
+		FCurveIKDebugData.P1 = P1;
+		FCurveIKDebugData.P2 = P2;
+
+		
+		float ArcLength = 0;
+		const float Weight = FMath::Clamp(ControlPointWeight, 0.0f, 1.0f);
+		IKCurve* Curve;
+		UE_LOG(LogTemp, Warning, TEXT("MaximumReach: %f"), MaximumReach);
 		if (RootToTargetDistSq > FMath::Square(MaximumReach))
 		{
-			for (int32 LinkIndex = 1; LinkIndex < NumChainLinks; LinkIndex++)
-			{
-				FCurveIKChainLink const& ParentLink = InOutChain[LinkIndex - 1];
-				FCurveIKChainLink& CurrentLink = InOutChain[LinkIndex];
-				CurrentLink.Position = ParentLink.Position + (TargetPosition - ParentLink.Position).GetUnsafeNormal() * CurrentLink.Length;
-			}
-			bBoneLocationUpdated = true;
-		}
-		else // Effector is within reach, calculate bone translations to position tip at effector location
+			Curve = FindCurveLine(P1, P2, HandleDir, MaximumReach);
+			UE_LOG(LogTemp, Warning, TEXT("Line Mode"));
+		} else
 		{
-			const FVector P1 = InOutChain[0].Position;
-			const FVector P2 = TargetPosition;
-			const FVector HandleDir = GetDefaultHandleDir(P1, P2, RightVector, UpVector);
-			FVector Handle;
-
-			FCurveIKDebugData.RightVector = RightVector;
-			FCurveIKDebugData.UpVector = UpVector;
-			FCurveIKDebugData.ControlVector = HandleDir;
-			FCurveIKDebugData.P1 = P1;
-			FCurveIKDebugData.P2 = P2;
-
-			float ArcLength = 0;
-			const float Weight = FMath::Clamp(ControlPointWeight, 0.0f, 1.0f);
-			FBezier Bezier = FindCurve(P1, P2, HandleDir, Handle, Weight, MaximumReach, MaxIterations, CurveFitTolerance, NumPointsOnCurve);
-			//FCurveIKDebugData.CurveCache = CurveCache;
-			FCurveIKDebugData.ControlPoint = Handle;
-
-			for (int LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)
-			{
-				FCurveIKChainLink& CurrentLink = InOutChain[LinkIndex];
-				ArcLength += CurrentLink.Length;
-
-				const FCurvePoint CurvePoint = Bezier.Approximate(ArcLength);
-				const FVector BonePosition = CurvePoint.Point;
-				CurrentLink.CurvePoint = CurvePoint;
-
-				if (Stretch != 0)
-				{
-					const float T = ArcLength / MaximumReach;
-					const FVector StretchedBonePosition = Bezier.Evaluate(T);
-					CurrentLink.Position = FMath::Lerp(BonePosition, StretchedBonePosition, Stretch);
-				} else
-				{
-					CurrentLink.Position = BonePosition;
-				}
-			}
-			bBoneLocationUpdated = true;
+			Curve = FindCurveBezier(P1, P2, HandleDir, Handle, Weight, MaximumReach, MaxIterations, CurveFitTolerance, NumPointsOnCurve);
 		}
+		FCurveIKDebugData.ControlPoint = Handle;
+
+		for (int LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)
+		{
+			FCurveIKChainLink& CurrentLink = InOutChain[LinkIndex];
+			ArcLength += CurrentLink.Length;
+
+			const FCurvePoint CurvePoint = Curve->Approximate(ArcLength);
+			const FVector BonePosition = CurvePoint.Point;
+			CurrentLink.CurvePoint = CurvePoint;
+			//UE_LOG(LogTemp, Warning, TEXT("BonePosition: %s"), *BonePosition.ToString());
+
+			if (Stretch != 0)
+			{
+				const float T = ArcLength / MaximumReach;
+				const FVector StretchedBonePosition = Curve->Evaluate(T);
+				CurrentLink.Position = FMath::Lerp(BonePosition, StretchedBonePosition, Stretch);
+			} else
+			{
+				CurrentLink.Position = BonePosition;
+			}
+		}
+		bBoneLocationUpdated = true;
 		return bBoneLocationUpdated;
 	}
 };

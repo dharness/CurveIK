@@ -131,7 +131,6 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 			}
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("-----------------------------------------------"));
 		for (int32 LinkIndex = 0; LinkIndex < NumChainLinks - 1; LinkIndex++)
 		{
 			FCurveIKChainLink & CurrentLink = CurrentChain[LinkIndex];
