@@ -1,5 +1,74 @@
 #include "IKCurves/IKCurveBezier.h"
 
+
+FVector IKCurveBezier::GetHandleLocation(const FVector HandleStart, const FVector HandleDir, const float HandleHeight)
+{
+	const FVector GetHandleLocation = HandleStart + (HandleDir * HandleHeight);
+	return GetHandleLocation;
+}
+
+/*
+ * See https://raphlinus.github.io/curves/2018/12/28/bezier-arclength.html
+ */
+float IKCurveBezier::GetHandleHeight(const FVector P1, const FVector P2, const float HandleWeight, const float ArcLength)
+{
+	const FVector P = (P2 - P1);
+	const float Lc = P.Size();
+
+	const float A = Lc * HandleWeight;
+	const float B = Lc - A;
+	const float Lp = 3 * ArcLength - 2 * Lc;
+	const float HandleHeight = FMath::Sqrt(FMath::Pow(A, 4) - 2 * FMath::Square(A) * FMath::Square(B) - 2 * FMath::Square(A) * FMath::Square(Lp) + FMath::Pow(B, 4) - 2 * FMath::Square(B) * FMath::Square(Lp) + FMath::Pow(Lp, 4)) / (2 * Lp);
+
+	return HandleHeight;
+}
+
+IKCurveBezier* IKCurveBezier::FindCurve(FVector P1, FVector P2, FVector HandleDir, FVector& HandlePosition,
+	float HandleWeight, float TargetArcLength, int MaxIterations, float CurveFitTolerance, int NumPoints)
+{
+	const FVector P = (P2 - P1);
+	const FVector HandleStart = P1 + (P * HandleWeight);
+	float HandleHeight = GetHandleHeight(P1, P2, HandleWeight, TargetArcLength);
+	float MinHandleHeight = 0;
+	float MaxHandleHeight = P.SizeSquared();
+
+	FVector ControlPoints[4];
+	ControlPoints[0] = P1;
+	ControlPoints[3] = P2;
+
+	IKCurveBezier* Bezier = nullptr;
+	for (int i = 0; i < MaxIterations; i++)
+	{
+		const FVector Handle = GetHandleLocation(HandleStart, HandleDir, HandleHeight);
+		ControlPoints[1] = Handle;
+		ControlPoints[2] = Handle;
+		HandlePosition = Handle;
+
+		Bezier = new IKCurveBezier(P1, Handle, P2);
+		Bezier->EvaluateMany(NumPoints);
+		const float Delta = Bezier->ArcLength - TargetArcLength;
+
+		if (FMath::Abs(Delta) < CurveFitTolerance) { break; }
+		else
+		{
+			// Height too High
+			if (Delta > 0)
+			{
+				MaxHandleHeight = HandleHeight;
+			}
+			// Height too Low
+			else
+			{
+				MinHandleHeight = HandleHeight;
+			}
+			const float Range = MaxHandleHeight - MinHandleHeight;
+			HandleHeight = MinHandleHeight + (Range / 2.f);
+		}
+	}
+
+	return Bezier;
+}
+
 FVector IKCurveBezier::Evaluate(const float T) const
 {
 	const auto Pow = FGenericPlatformMath::Pow;

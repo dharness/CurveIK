@@ -17,23 +17,25 @@ struct FCurveIK_CachedBoneData
 {
 	GENERATED_BODY()
 
-		FCurveIK_CachedBoneData()
+	FCurveIK_CachedBoneData()
 		: Bone(NAME_None)
 		, RefSkeletonIndex(INDEX_NONE)
-	{}
+	{
+	}
 
 	FCurveIK_CachedBoneData(const FName& InBoneName, int32 InRefSkeletonIndex)
 		: Bone(InBoneName)
 		, RefSkeletonIndex(InRefSkeletonIndex)
-	{}
+	{
+	}
 
-	/** The bone we refer to */
+	/** The bone this data applies to */
 	UPROPERTY()
-		FBoneReference Bone;
+	FBoneReference Bone;
 
 	/** Index of the bone in the reference skeleton */
 	UPROPERTY()
-		int32 RefSkeletonIndex;
+	int32 RefSkeletonIndex;
 };
 
 USTRUCT(BlueprintType)
@@ -41,17 +43,25 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 {
 	GENERATED_USTRUCT_BODY()
 
+	/** The location that the IK system attempts to extend towards */
 	UPROPERTY(EditAnywhere, Category = Effector, meta = (PinShownByDefault))
 	FVector EffectorLocation;
 
+	/** A draggable target used in editing */
 	UPROPERTY(EditAnywhere, Category = Effector)
 	FBoneSocketTarget EffectorTarget;
 
+	/** Controls the interpretation of FAnimNode_CurveIK::EffectorLocation */
 	UPROPERTY(EditAnywhere, Category = Effector)
 	TEnumAsByte<enum EBoneControlSpace> EffectorLocationSpace;
 
+	/** Controls how close to the root or tip the control point is placed */
 	UPROPERTY(EditAnywhere, Category = Effector, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float ControlPointWeight;
+
+	/** The rotational offset from the default position of the curves normal. Controls which direction bends in the curve point. */
+	UPROPERTY(EditAnywhere, Category = Effector)
+	float NormalRotation;
 
 	/** Name of tip bone */
 	UPROPERTY(EditAnywhere, Category = Solver)
@@ -77,25 +87,22 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Stretch;
 
-	UPROPERTY(EditAnywhere, Category = Poles, meta = (ClampMin = "0", ClampMax = "360", UIMin = "0", UIMax = "360"))
-	float PoleAngle;
-
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = Debug)
-		/** Toggle drawing of axes to debug joint rotation*/
-		bool bEnableDebugDraw;
+	/** Toggle drawing of axes to debug joint rotation*/
+	bool bEnableDebugDraw;
 
-		UPROPERTY(EditAnywhere, Category = Debug)
-		bool bShowNormals;
-		
-		UPROPERTY(EditAnywhere, Category = Debug)
-		bool bShowTangents;
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bShowNormals;
 
-		UPROPERTY(EditAnywhere, Category = Debug)
-		bool bShowBoneDirection;
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bShowTangents;
 
-		UPROPERTY(EditAnywhere, Category = Debug)
-		bool bShowLinks;
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bShowBoneDirection;
+
+	UPROPERTY(EditAnywhere, Category = Debug)
+	bool bShowLinks;
 #endif
 
 public:
