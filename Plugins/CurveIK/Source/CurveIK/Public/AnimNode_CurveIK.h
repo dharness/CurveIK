@@ -81,9 +81,21 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 	float PoleAngle;
 
 #if WITH_EDITORONLY_DATA
-	/** Toggle drawing of axes to debug joint rotation*/
-	UPROPERTY(EditAnywhere, Category = Solver)
+	UPROPERTY(EditAnywhere, Category = Debug)
+		/** Toggle drawing of axes to debug joint rotation*/
 		bool bEnableDebugDraw;
+
+		UPROPERTY(EditAnywhere, Category = Debug)
+		bool bShowNormals;
+		
+		UPROPERTY(EditAnywhere, Category = Debug)
+		bool bShowTangents;
+
+		UPROPERTY(EditAnywhere, Category = Debug)
+		bool bShowBoneDirection;
+
+		UPROPERTY(EditAnywhere, Category = Debug)
+		bool bShowLinks;
 #endif
 
 public:

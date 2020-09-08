@@ -156,19 +156,14 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 
 			// Correct the bone roll
 			{
-				FVector const BoneRollAxis = -1 * NewDir;
 				FVector OldBoneRollDir = CurrentBoneTransform.GetRotation().GetUpVector() * -1.f;
-				CurrentLink.OldBoneRollDir = OldBoneRollDir;
 
 				FVector NewBoneRollDir = FVector::VectorPlaneProject(CurrentLink.CurvePoint.Normal, NewDir);
-				float const DeltaToNewBoneRoll = FMath::Acos(FVector::DotProduct(OldBoneRollDir, NewBoneRollDir));
-
 				FQuat const DeltaBoneRoll = FQuat::FindBetweenVectors(OldBoneRollDir, NewBoneRollDir);
-				CurrentLink.NewBoneRollDir = NewBoneRollDir;
 				
 				CurrentBoneTransform.SetRotation(DeltaBoneRoll * CurrentBoneTransform.GetRotation());
 				CurrentBoneTransform.NormalizeRotation();
-				CurrentLink.BoneUpVector = CurrentBoneTransform.GetRotation().GetUpVector() * -1.f;
+				CurrentLink.BoneDownVector = CurrentBoneTransform.GetRotation().GetUpVector() * -1.f;
 			}
 
 			// Update zero length children if any

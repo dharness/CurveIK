@@ -9,10 +9,63 @@ enum CurveType { Bezier, Line };
 namespace CurveIK_AnimationCore
 {
 	FVector GetDefaultHandleDir(const FVector P1, const FVector P2, const FVector ComponentUpVector,
-		FVector ComponentRightVector)
+		FVector ComponentRightVector, FCurveIKDebugData& CurveIKDebugData)
 	{
-		const FVector P = (P2 - P1);
+		const FVector P = (P2 - P1).GetSafeNormal();
+		//auto PlaneNormal = FVector::CrossProduct(P, ComponentUpVector).GetSafeNormal();
+		//auto RightOnPlane = FVector::VectorPlaneProject(ComponentRightVector, PlaneNormal).GetSafeNormal();
+		auto RightOnPlane = FVector(P.X, P.Y, 0.f).GetSafeNormal();
+		CurveIKDebugData.RightOnPlane = RightOnPlane;
+		//
+		auto Theta = FMath::Acos(FVector::DotProduct(RightOnPlane, P));
+		auto RotationAxis = FVector::CrossProduct(RightOnPlane, P).GetSafeNormal();
+		auto DeltaQuat = FQuat(RotationAxis, Theta);
+		return DeltaQuat.RotateVector(ComponentUpVector);
+		
+		//auto Theta = FMath::Acos(FVector::DotProduct(RightOnPlane, P));
+		//auto DeltaQuat = FQuat(PlaneNormal, Theta);
+		//return DeltaQuat.RotateVector(ComponentUpVector);
+
+		
+
+		//auto v = FVector::CrossProduct(ComponentRightVector, P);
+		//float const MatrixOrder = 3;
+
+		//float vx[3 * 3] = {
+		//	0, -1*v.Z, v.Y,
+		//	v.Z, 0, -1*v.X,
+		//	-1*v.Y, v.X, 0
+		//};
+		//float I[3 * 3] = {
+		//	1, 0, 0,
+		//	0, 1, 0,
+		//	0, 0, 1
+		//};
+		////auto RowMajorIndex = 3 * i + j;
+		//float C = FVector::DotProduct(ComponentRightVector, P);
+		//float CP = 1 / (1 + C);
+		//TArray<float> R;
+		//R.Init(0, 3 * 3);
+
+		//for(int i = 0; i < 9; i++)
+		//{
+		//	float vx2 = FMath::Square(vx[i]);
+		//	R[i] = I[i] + vx[i] + (vx2 * CP);
+		//	UE_LOG(LogTemp, Warning, TEXT("%f"), R[i]);
+		//}
+
+		//FVector B = ComponentUpVector;
+		//FVector result = FVector(
+		//	(R[0] * B[0]) + (R[1] * B[1]) + (R[2] * B[2]),
+		//	(R[3] * B[0]) + (R[4] * B[1]) + (R[5] * B[2]),
+		//	(R[6] * B[0]) + (R[7] * B[1]) + (R[8] * B[2])
+		//);
+		//return result;
+		//return FVector::RightVector;
+		
+		
 		const FQuat Transformation = FQuat::FindBetweenVectors(ComponentUpVector, P);
+		UE_LOG(LogTemp, Warning, TEXT("Transformation: %s"), *Transformation.ToString());
 		const FVector HandleVector = Transformation.RotateVector(ComponentRightVector);
 
 		return HandleVector.GetSafeNormal();
@@ -104,12 +157,12 @@ namespace CurveIK_AnimationCore
 
 		const FVector P1 = InOutChain[0].Position;
 		FVector P2 = TargetPosition;
-		const FVector HandleDir = GetDefaultHandleDir(P1, P2, RightVector, UpVector);
+		const FVector HandleDir = GetDefaultHandleDir(P1, P2, UpVector, RightVector, FCurveIKDebugData);
 		FVector Handle;
 
 		FCurveIKDebugData.RightVector = RightVector;
 		FCurveIKDebugData.UpVector = UpVector;
-		FCurveIKDebugData.ControlVector = HandleDir;
+		FCurveIKDebugData.HandleDir = HandleDir;
 		FCurveIKDebugData.P1 = P1;
 		FCurveIKDebugData.P2 = P2;
 

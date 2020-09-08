@@ -22,9 +22,9 @@ public:
 
 	/* The point on the curve where the base of this link lies */
 	FCurvePoint CurvePoint;
-	FVector OldBoneRollDir;
-	FVector NewBoneRollDir;
-	FVector BoneUpVector;
+
+	/* The true down direction of the bone's transform after being placed and rotated by the solver */
+	FVector BoneDownVector;
 
 	/** Bone Index in SkeletalMesh */
 	int32 BoneIndex;
@@ -83,11 +83,13 @@ struct FCurveIKDebugData
 
 public:
 	FVector ControlPoint;
-	FVector ControlVector;
+	FVector HandleDir;
 	FVector P1;
 	FVector P2;
 	FVector RightVector;
 	FVector UpVector;
+	FVector RightOnPlane;
+
 	FCurveIK_CurveCache CurveCache;
 
 };

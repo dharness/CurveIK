@@ -71,7 +71,7 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 		const FVector P2 = CurveIKDebugData.P2;
 		const FVector ControlPoint = CurveIKDebugData.ControlPoint;
 
-		const float LineScale = 30;
+		const float LineScale = 200;
 		PDI->DrawPoint(P1, FLinearColor::Blue, 15, SDPG_Foreground);
 		PDI->DrawPoint(P2, FLinearColor::Blue, 15, SDPG_Foreground);
 		PDI->DrawPoint(ControlPoint, FLinearColor::Red, 15, SDPG_Foreground);
@@ -87,23 +87,29 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 
 		PDI->DrawLine(
 			MidPoint,
-			MidPoint + (CurveIKDebugData.ControlVector * LineScale),
+			MidPoint + (CurveIKDebugData.HandleDir * LineScale),
 			FLinearColor::FromSRGBColor(FColor::Red),
 			SDPG_Foreground
 		);
 
-		const auto MidPointOriginal = (P1 + (CurveIKDebugData.UpVector * LineScale)) / 2;
 		PDI->DrawLine(
-			MidPointOriginal,
-			MidPointOriginal + (CurveIKDebugData.RightVector.GetSafeNormal() * LineScale),
+			MidPoint,
+			MidPoint + (CurveIKDebugData.RightVector * LineScale),
+			FLinearColor::FromSRGBColor(FColor::Green),
+			SDPG_Foreground
+		);
+
+		PDI->DrawLine(
+			MidPoint,
+			MidPoint + (CurveIKDebugData.RightOnPlane * LineScale),
 			FLinearColor::FromSRGBColor(FColor::Orange),
 			SDPG_Foreground
 		);
 
 		PDI->DrawLine(
-			P1,
-			P1 + (CurveIKDebugData.UpVector * LineScale),
-			FLinearColor::FromSRGBColor(FColor::Orange),
+			MidPoint,
+			MidPoint + (CurveIKDebugData.UpVector * LineScale),
+			FLinearColor::FromSRGBColor(FColor::Blue),
 			SDPG_Foreground
 		);
 	
@@ -111,45 +117,43 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 		{
 			FCurveIKChainLink ChainLink = RuntimeNode->Chain[i];
 			FCurveIKChainLink LastChainLink = RuntimeNode->Chain[i - 1];
-			PDI->DrawLine(
-				LastChainLink.Position,
-				ChainLink.Position,
-				FLinearColor::FromSRGBColor(FColor::Orange),
-				SDPG_Foreground
-			);
-			PDI->DrawLine(
-				ChainLink.Position,
-				ChainLink.Position + (ChainLink.CurvePoint.Tangent * 200.f),
-				FLinearColor::FromSRGBColor(FColor::Emerald),
-				SDPG_Foreground
-			);
-			PDI->DrawLine(
-				ChainLink.Position,
-				ChainLink.Position + (ChainLink.CurvePoint.Normal * 200.f),
-				FLinearColor::FromSRGBColor(FColor::Red),
-				SDPG_Foreground
-			);
-			PDI->DrawLine(
-				ChainLink.Position,
-				ChainLink.Position + (ChainLink.NewBoneRollDir * 200.f),
-				FLinearColor::FromSRGBColor(FColor::Blue),
-				SDPG_Foreground
-			);
-			PDI->DrawLine(
-				ChainLink.Position,
-				ChainLink.Position + (ChainLink.OldBoneRollDir * 200.f),
-				FLinearColor::FromSRGBColor(FColor::Black),
-				SDPG_Foreground
-			);
-			PDI->DrawLine(
-				ChainLink.Position,
-				ChainLink.Position + (ChainLink.BoneUpVector * 200.f),
-				FLinearColor::FromSRGBColor(FColor::Yellow),
-				SDPG_Foreground
-			);
-
-			PDI->DrawPoint(ChainLink.Position, FLinearColor::FromSRGBColor(FColor::Orange), 30, SDPG_Foreground);
-			FCurveIKChainLink ParentChainLink = RuntimeNode->Chain[i - 1];
+			if (RuntimeNode->bShowLinks)
+			{				
+				PDI->DrawLine(
+					LastChainLink.Position,
+					ChainLink.Position,
+					FLinearColor::FromSRGBColor(FColor::Orange),
+					SDPG_Foreground
+				);
+				PDI->DrawPoint(ChainLink.Position, FLinearColor::FromSRGBColor(FColor::Orange), 30, SDPG_Foreground);
+			}
+			if (RuntimeNode->bShowTangents)
+			{
+				PDI->DrawLine(
+					ChainLink.Position,
+					ChainLink.Position + (ChainLink.CurvePoint.Tangent * 200.f),
+					FLinearColor::FromSRGBColor(FColor::Emerald),
+					SDPG_Foreground
+				);
+			}
+			if (RuntimeNode->bShowNormals)
+			{				
+				PDI->DrawLine(
+					ChainLink.Position,
+					ChainLink.Position + (ChainLink.CurvePoint.Normal * 200.f),
+					FLinearColor::FromSRGBColor(FColor::Red),
+					SDPG_Foreground
+				);
+			}
+			if (RuntimeNode->bShowBoneDirection)
+			{				
+				PDI->DrawLine(
+					ChainLink.Position,
+					ChainLink.Position + (ChainLink.BoneDownVector * 200.f),
+					FLinearColor::FromSRGBColor(FColor::Yellow),
+					SDPG_Foreground
+				);
+			}
 		}
 
 		auto CachePoints = CurveIKDebugData.CurveCache.GetPoints();
