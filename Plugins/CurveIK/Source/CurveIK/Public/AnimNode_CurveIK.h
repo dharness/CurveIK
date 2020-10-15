@@ -6,6 +6,7 @@
 #include "BoneContainer.h"
 #include "BonePose.h"
 #include "CurveIKCore.h"
+#include "IKCurves/IKCurve.h"
 #include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "AnimNode_CurveIK.generated.h"
 
@@ -63,6 +64,9 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 	UPROPERTY(EditAnywhere, Category = Effector)
 	float NormalRotation;
 
+	UPROPERTY(EditAnywhere, Category = Solver)
+	TEnumAsByte<enum EIKCurveTypes> CurveType;
+
 	/** Name of tip bone */
 	UPROPERTY(EditAnywhere, Category = Solver)
 	FBoneReference TipBone;
@@ -86,6 +90,9 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 	/** Degree to which the bones may stretch to approximate the curve more accurately. Non-zero values may cause the tip to fail to align with target. */
 	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Stretch;
+
+	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "0", ClampMax = "360", UIMin = "0", UIMax = "360"))
+	float HandleAngle;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = Debug)

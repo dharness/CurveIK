@@ -2,6 +2,7 @@
 #include "CurveCache.h"
 #include "IKCurves/IKCurveBezier.h"
 #include "Engine/World.h"
+#include "IKCurves/IKCurveCubicBezier.h"
 #include "IKCurves/IKCurveLine.h"
 
 enum CurveType { Bezier, Line };
@@ -23,9 +24,15 @@ namespace CurveIK_AnimationCore
 	FVector GetReferenceNormal(const FVector P1, const FVector P2, const FVector ComponentUpVector,
 	                            FCurveIKDebugData& CurveIKDebugData)
 	{
+		const FVector P_ = (P2 - P1).GetSafeNormal();
+		const FVector V = FVector::DownVector - P_;
+		
+		return -1 * FVector::VectorPlaneProject(V, P_).GetSafeNormal();
+
+		// OLD--------------------------
 		const FVector P = (P2 - P1).GetSafeNormal();
 		FVector const RightOnPlane = FVector(P.X, P.Y, 0.f).GetSafeNormal();
-		CurveIKDebugData.RightOnPlane = RightOnPlane;
+		//CurveIKDebugData.RightOnPlane = RightOnPlane;
 
 		float const Theta = FMath::Acos(FVector::DotProduct(RightOnPlane, P));
 		FVector const RotationAxis = FVector::CrossProduct(RightOnPlane, P).GetSafeNormal();
@@ -36,7 +43,7 @@ namespace CurveIK_AnimationCore
 	// Implementation of the curve IK algorithm
 	bool SolveCurveIK(TArray<FCurveIKChainLink>& InOutChain, const FVector& TargetPosition, float ControlPointWeight,
 	                  float MaximumReach, int MaxIterations, float CurveFitTolerance, int NumPointsOnCurve, float Stretch,
-	                  FCurveIKDebugData& FCurveIKDebugData)
+	                  FCurveIKDebugData& FCurveIKDebugData, float HandleAngle, EIKCurveTypes CurveType)
 	{
 		float const RootToTargetDistSq = FVector::DistSquared(InOutChain[0].Position, TargetPosition);
 		int32 const NumChainLinks = InOutChain.Num();
@@ -46,7 +53,7 @@ namespace CurveIK_AnimationCore
 		FVector const P1 = InOutChain[0].Position;
 		FVector const P2 = TargetPosition;
 		FVector const HandleDir = GetReferenceNormal(P1, P2, UpVector, FCurveIKDebugData);
-		FVector Handle;
+		TArray<FVector> ControlPoints;
 		
 		float ArcLength = 0;
 		const float Weight = FMath::Clamp(ControlPointWeight, 0.0f, 1.0f);
@@ -55,9 +62,13 @@ namespace CurveIK_AnimationCore
 		if (RootToTargetDistSq > FMath::Square(MaximumReach))
 		{
 			Curve = IKCurveLine::FindCurve(P1, P2, HandleDir, MaximumReach);
-		} else
+		}
+		else
 		{
-			Curve = IKCurveBezier::FindCurve(P1, P2, HandleDir, Handle, Weight, MaximumReach, MaxIterations, CurveFitTolerance, NumPointsOnCurve);
+			if (CurveType == IK_QuadraticBezier) { ControlPoints.SetNum(3); }
+			else { ControlPoints.SetNum(4); }
+			Curve = IKCurveCubicBezier::FindCurve(P1, P2, HandleDir, Weight, MaximumReach, MaxIterations,
+			                                      CurveFitTolerance, NumPointsOnCurve, ControlPoints, HandleAngle, CurveType);
 		}
 
 		for (int LinkIndex = 0; LinkIndex < NumChainLinks; LinkIndex++)
@@ -81,7 +92,7 @@ namespace CurveIK_AnimationCore
 		}
 
 		#if WITH_EDITOR
-				FCurveIKDebugData.ControlPoint = Handle;
+				FCurveIKDebugData.ControlPoints = ControlPoints;
 				FCurveIKDebugData.RightVector = RightVector;
 				FCurveIKDebugData.UpVector = UpVector;
 				FCurveIKDebugData.HandleDir = HandleDir;

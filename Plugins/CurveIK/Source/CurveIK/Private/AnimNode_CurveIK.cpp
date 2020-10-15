@@ -112,7 +112,7 @@ void FAnimNode_CurveIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseCon
 
 	const bool bBoneLocationUpdated = CurveIK_AnimationCore::SolveCurveIK(
 		CurrentChain, CSEffectorLocation, ControlPointWeight,
-		MaximumReach, MaxIterations, CurveFitTolerance, CurveDetail, Stretch, CurveIKDebugData);
+		MaximumReach, MaxIterations, CurveFitTolerance, CurveDetail, Stretch, CurveIKDebugData, HandleAngle, CurveType);
 
 	// If we moved some bones, update bone transforms.
 	if (bBoneLocationUpdated)

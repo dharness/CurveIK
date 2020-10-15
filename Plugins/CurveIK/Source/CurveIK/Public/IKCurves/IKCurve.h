@@ -3,6 +3,13 @@
 #include "CoreMinimal.h"
 #include "CurveCache.h"
 
+UENUM(BlueprintType)
+enum EIKCurveTypes
+{
+	IK_QuadraticBezier UMETA(DisplayName = "Quadratic Bezier"),
+	IK_CubicBezier UMETA(DisplayName = "Cubic Bezier"),
+};
+
 /*
  * Abstract base class representing all the required methods for a curve to be useable in the IK system.
  * To add a new curve type, extend this class.

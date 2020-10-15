@@ -69,13 +69,7 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 		const FVector MidPoint = CurveIKDebugData.P1 + (CurveIKDebugData.P2 / 2.0);
 		const FVector P1 = CurveIKDebugData.P1;
 		const FVector P2 = CurveIKDebugData.P2;
-		const FVector ControlPoint = CurveIKDebugData.ControlPoint;
-
 		const float LineScale = 200;
-		PDI->DrawPoint(P1, FLinearColor::Blue, 15, SDPG_Foreground);
-		PDI->DrawPoint(P2, FLinearColor::Blue, 15, SDPG_Foreground);
-		PDI->DrawPoint(ControlPoint, FLinearColor::Red, 15, SDPG_Foreground);
-
 
 		// P Vector
 		PDI->DrawLine(
@@ -84,25 +78,42 @@ void FCurveIKEditMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 			FLinearColor::FromSRGBColor(FColor::Cyan),
 			SDPG_Foreground
 		);
+		PDI->DrawPoint(P1, FColor::Cyan, 15, SDPG_Foreground);
+		PDI->DrawPoint(P2, FColor::Cyan, 15, SDPG_Foreground);
 
 		PDI->DrawLine(
 			MidPoint,
 			MidPoint + (CurveIKDebugData.HandleDir * LineScale),
-			FLinearColor::FromSRGBColor(FColor::Red),
+			FLinearColor::FromSRGBColor(FColor::Magenta),
 			SDPG_Foreground
 		);
+
+		if (CurveIKDebugData.ControlPoints.Num() >= 3)
+		{
+			FVector HandleEnd1 = CurveIKDebugData.ControlPoints[1];
+			// Toggle between quadratic and cubic bezier
+			FVector HandleEnd2 = CurveIKDebugData.ControlPoints[CurveIKDebugData.ControlPoints.Num() == 4 ? 2 : 1];
+			PDI->DrawLine(
+				P1,
+				HandleEnd1,
+				FLinearColor::FromSRGBColor(FColor::Red),
+				SDPG_Foreground
+			);
+			PDI->DrawPoint(HandleEnd1, FLinearColor::FromSRGBColor(FColor::Red), 10, SDPG_Foreground);
+			
+			PDI->DrawLine(
+				P2,
+				HandleEnd2,
+				FLinearColor::FromSRGBColor(FColor::Red),
+				SDPG_Foreground
+			);
+			PDI->DrawPoint(HandleEnd2, FLinearColor::FromSRGBColor(FColor::Red), 10, SDPG_Foreground);
+		}
 
 		PDI->DrawLine(
 			MidPoint,
 			MidPoint + (CurveIKDebugData.RightVector * LineScale),
 			FLinearColor::FromSRGBColor(FColor::Green),
-			SDPG_Foreground
-		);
-
-		PDI->DrawLine(
-			MidPoint,
-			MidPoint + (CurveIKDebugData.RightOnPlane * LineScale),
-			FLinearColor::FromSRGBColor(FColor::Orange),
 			SDPG_Foreground
 		);
 

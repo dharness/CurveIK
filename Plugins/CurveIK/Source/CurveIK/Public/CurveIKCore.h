@@ -4,6 +4,8 @@
 #include "UObject/ObjectMacros.h"
 #include "BoneIndices.h"
 #include "CurveCache.h"
+#include "IKCurves/IKCurve.h"
+
 
 #include "CurveIKCore.generated.h"
 
@@ -82,13 +84,12 @@ struct FCurveIKDebugData
 	GENERATED_BODY()
 
 public:
-	FVector ControlPoint;
-	FVector HandleDir;
+	TArray<FVector> ControlPoints;
 	FVector P1;
 	FVector P2;
 	FVector RightVector;
 	FVector UpVector;
-	FVector RightOnPlane;
+	FVector HandleDir;
 
 	FCurveIK_CurveCache CurveCache;
 
@@ -98,5 +99,5 @@ namespace CurveIK_AnimationCore
 {
 	CURVEIK_API bool SolveCurveIK(TArray<FCurveIKChainLink>& InOutChain, const FVector& TargetLocation,
 	                              float ControlPointWeight, float MaximumReach, int MaxIterations, float CurveFitTolerance,
-	                              int NumPointsOnCurve, float Stretch, FCurveIKDebugData& CurveIKDebugData);
+	                              int NumPointsOnCurve, float Stretch, FCurveIKDebugData& CurveIKDebugData, float HandleAngle, EIKCurveTypes CurveType);
 };
