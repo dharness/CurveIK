@@ -61,8 +61,10 @@ public:
 	 * @return The Bezier curve with the closest arc-length to the target within the allowable tolerance
 	 */
 	static IKCurveCubicBezier* FindCurve(FVector P1, FVector P2, FVector HandleDir, float HandleWeight,
-	                                     float TargetArcLength, int MaxIterations, float CurveFitTolerance, int NumPoints,
-	                                     TArray<FVector>& ControlPoints, float HandleAngle, EIKCurveTypes CurveType);
+	                                                         float TargetArcLength, int MaxIterations,
+	                                                         float CurveFitTolerance, int NumPoints,
+	                                                         TArray<FVector>& ControlPoints, float HandleAngle,
+	                                                         EIKCurveTypes CurveType);
 
 private:
 	FVector A;

@@ -26,7 +26,7 @@ float IKCurveCubicBezier::GetHandleHeight(const FVector P1, const FVector P2, co
 IKCurveCubicBezier* IKCurveCubicBezier::FindCurve(FVector P1, FVector P2, FVector HandleDir, float HandleWeight,
                                                   float TargetArcLength, int MaxIterations, float CurveFitTolerance,
                                                   int NumPoints, TArray<FVector>& ControlPoints, float HandleAngle,
-                                                  EIKCurveTypes CurveType)
+												  EIKCurveTypes CurveType)
 {
 	const FVector P = (P2 - P1);
 	const FVector QuadHandleStart = P1 + (P * HandleWeight);

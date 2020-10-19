@@ -45,6 +45,8 @@ void UAnimGraphNode_CurveIK::CopyNodeDataToPreviewNode(FAnimNode_Base* InPreview
 	AnimNodeCurveIK->CurveFitTolerance = Node.CurveFitTolerance;
 	AnimNodeCurveIK->NormalRotation = Node.NormalRotation;
 	AnimNodeCurveIK->CurveType = Node.CurveType;
+	AnimNodeCurveIK->HandleAngle = Node.HandleAngle;
+	AnimNodeCurveIK->ControlPointWeight = Node.ControlPointWeight;
 }
 
 FEditorModeID UAnimGraphNode_CurveIK::GetEditorMode() const

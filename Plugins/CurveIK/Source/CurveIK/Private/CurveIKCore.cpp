@@ -28,16 +28,6 @@ namespace CurveIK_AnimationCore
 		const FVector V = FVector::DownVector - P_;
 		
 		return -1 * FVector::VectorPlaneProject(V, P_).GetSafeNormal();
-
-		// OLD--------------------------
-		const FVector P = (P2 - P1).GetSafeNormal();
-		FVector const RightOnPlane = FVector(P.X, P.Y, 0.f).GetSafeNormal();
-		//CurveIKDebugData.RightOnPlane = RightOnPlane;
-
-		float const Theta = FMath::Acos(FVector::DotProduct(RightOnPlane, P));
-		FVector const RotationAxis = FVector::CrossProduct(RightOnPlane, P).GetSafeNormal();
-		FQuat const DeltaQuat = FQuat(RotationAxis, Theta);
-		return DeltaQuat.RotateVector(ComponentUpVector);
 	}
 
 	// Implementation of the curve IK algorithm

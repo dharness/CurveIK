@@ -91,7 +91,8 @@ struct CURVEIK_API FAnimNode_CurveIK : public FAnimNode_SkeletalControlBase
 	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Stretch;
 
-	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "0", ClampMax = "360", UIMin = "0", UIMax = "360"))
+	/** Specifies the angle of the handles of the bezier curve */
+	UPROPERTY(EditAnywhere, Category = Solver, meta = (ClampMin = "-360", ClampMax = "360", UIMin = "-360", UIMax = "360"))
 	float HandleAngle;
 
 #if WITH_EDITORONLY_DATA
