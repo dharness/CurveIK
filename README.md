@@ -43,14 +43,16 @@ CurveIK provides a single animation blueprint node:
 
 To Debug your IK setup, enable debug draw in the details panel.
 
-![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/debug.gif=250x250)
-
+<img src="https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/debug.gif" width="300px">
 
 ##### Show Normals
-![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowNormals.png=250x250)
+<img src="https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowNormals.png" width="300px">
+
 ##### Show Tangents
-![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowTangents.png=250x250)
+<img src="https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowTangents.png" width="300px">
+
 ##### Show Bone Direction
-![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowBoneDirection.png=250x250)
+<img src="https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowBoneDirection.png" width="300px">
+
 ##### Show Links
-![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowLinks.png=250x250)
+<img src="https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/ShowLinks.png" width="300px">
