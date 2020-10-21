@@ -39,7 +39,7 @@ CurveIK provides a single animation blueprint node:
 | Handle Angle | The angle of offset (in degrees) for the bezier handles. The owning component's up vector is defined to be 0-degrees |
 
 
-#### Debug
+### Debug
 
 To Debug your IK setup, enable debug draw in the details panel.
 
