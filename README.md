@@ -6,6 +6,8 @@ This repo contains the initial release of the project - use in commercial projec
 
 ## Demo
 
+![Image not found, I wonder why](https://raw.githubusercontent.com/dharness/CurveIK/master/Docs/All_3_vs.gif)
+
 ## Animation Blueprints
 
 CurveIK provides a single animation blueprint node:
